@@ -1,0 +1,21 @@
+# Optional, EXPERIMENTAL: Apple Silicon acceleration via MLX.
+# Install with install_mlx.sh (NOT with the main requirements) - these packages
+# are arm64-macOS only and will not resolve on Windows or Linux.
+#
+# Nothing here is needed for Apple GPU support in general:
+#   * The embedding model runs on the Apple GPU through PyTorch MPS, which the
+#     pinned torch already ships. Pick "Apple Metal / MPS" in Settings.
+#   * llama.cpp gets Metal from the wheel index run.sh already uses on arm64
+#     Macs (whl/metal). No extra install.
+# MLX is a further, separate engine - install it only if you want to try it.
+#
+# Left UNPINNED on purpose, matching requirements-openvino.txt: this stack must
+# stay compatible with whatever transformers/torch the main install resolved,
+# and it is not part of the tested, locked baseline. mlx-lm's generate() has
+# changed signature across releases (temp= -> sampler=), which is why
+# src/mlx_backend.py picks by introspection instead of by version.
+# After a SUCCESSFUL install, freeze what resolved to lock your own build:
+#   .venv/bin/python -m pip freeze | grep -iE "^mlx" > requirements-mlx.lock
+mlx
+mlx-lm
+mlx-embeddings

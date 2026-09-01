@@ -1,0 +1,42 @@
+# TicketLens runtime dependencies — PINNED to the tested, known-good set.
+# Validated on Python 3.14.6; these versions also publish wheels for CPython
+# 3.11–3.14 (pandas 3.x requires Python 3.11+), which is the supported range.
+#
+# Reproducibility:
+#   • This file pins the DIRECT dependencies — enough for a consistent install
+#     across the supported interpreters.
+#   • requirements.lock is a full freeze of every (transitive) package for
+#     byte-exact reproduction on Python 3.14 — use it when you need an identical
+#     environment:  python -m pip install -r requirements.lock --extra-index-url \
+#                    https://abetlen.github.io/llama-cpp-python/whl/cpu
+#   • Dev/test tooling (pytest) lives in requirements-dev.txt, not here.
+#
+# run.bat installs this file with the prebuilt CPU llama.cpp wheel index:
+#   --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --only-binary llama-cpp-python
+
+# Clustering / topic modelling
+bertopic==0.17.4
+umap-learn==0.5.12
+hdbscan==0.8.44
+scikit-learn==1.9.0          # imported directly (KMeans, CountVectorizer, stopwords)
+numba==0.66.0                # pulled by umap/hdbscan; pinned because it gates the numpy ceiling
+numpy==2.4.6                 # keep < 2.5 for numba compatibility
+
+# Embeddings / LLM
+sentence-transformers==5.6.0
+llama-cpp-python==0.3.32
+
+# Data I/O
+pandas==3.0.3
+openpyxl==3.1.5
+
+# GUI
+PySide6==6.11.1
+
+# Visualisation / export
+matplotlib==3.11.0
+plotly==6.8.0
+kaleido==1.3.0
+wordcloud==1.9.6
+python-docx==1.2.0
+jinja2==3.1.6

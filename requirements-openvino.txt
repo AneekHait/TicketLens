@@ -1,0 +1,14 @@
+# Optional, EXPERIMENTAL: OpenVINO INT8 embedding acceleration.
+# Install with install_openvino.bat (NOT with the main requirements) — the
+# optimum packages are installed --no-deps to avoid downgrading transformers.
+#
+# These are intentionally left UNPINNED: this stack must stay compatible with
+# whatever `transformers` version the main install resolved (currently 5.x),
+# and the OpenVINO path is not part of the tested/locked baseline. After a
+# SUCCESSFUL install, freeze the resolved versions to lock your own build:
+#   .venv\Scripts\python.exe -m pip freeze | findstr /I "openvino nncf onnx datasets optimum" > requirements-openvino.lock
+openvino
+openvino-tokenizers
+nncf
+onnx
+datasets

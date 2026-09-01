@@ -1,0 +1,74 @@
+TicketLens
+Copyright 2026 Aneek Hait
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied.
+
+--------------------------------------------------------------------------------
+Third-party dependencies
+--------------------------------------------------------------------------------
+
+TicketLens vendors no third-party source code. It installs the following
+separately licensed packages at setup time; each retains its own copyright and
+license terms. Licenses below were read from the installed package metadata of
+the tested environment (see requirements.txt for the pinned versions).
+
+  bertopic .................. MIT
+  umap-learn ................ BSD-3-Clause
+  hdbscan ................... BSD-3-Clause
+  scikit-learn .............. BSD-3-Clause
+  numba ..................... BSD-2-Clause
+  numpy ..................... BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
+  sentence-transformers ..... Apache-2.0
+  llama-cpp-python .......... MIT
+  pandas .................... BSD-3-Clause
+  openpyxl .................. MIT
+  PySide6 ................... LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+  matplotlib ................ Python Software Foundation License (BSD-compatible)
+  plotly .................... MIT
+  kaleido ................... MIT
+  wordcloud ................. MIT
+  python-docx ............... MIT
+  Jinja2 .................... BSD-3-Clause
+
+Optional, installed only by install_openvino.bat:
+
+  openvino, openvino-tokenizers, nncf, onnx ... Apache-2.0
+  datasets .................................... Apache-2.0
+
+Optional, installed only by install_mlx.sh (Apple Silicon):
+
+  mlx ......................................... MIT
+  mlx-lm ...................................... MIT
+  mlx-embeddings .............................. GPL-3.0   <-- note the difference
+
+IMPORTANT -- mlx-embeddings is GPL-3.0, unlike everything else listed here.
+TicketLens does not bundle, vendor or redistribute it: it is fetched from PyPI
+by install_mlx.sh only if you choose to run that script, and the app is fully
+functional without it. Apache-2.0 and GPL-3.0 are one-way compatible (Apache-2.0
+code may be combined into a GPL-3.0 work, not the reverse), so if YOU distribute
+a bundle that includes mlx-embeddings, that combined distribution must comply
+with GPL-3.0. If you would rather avoid this entirely, do not run
+install_mlx.sh: the Apple GPU is still used for embeddings through PyTorch MPS
+(BSD-3-Clause) and for LLM labelling through the Metal llama.cpp build (MIT).
+
+Note on PySide6/Qt: TicketLens links PySide6 dynamically and does not
+redistribute it. If you build and ship a bundled binary that embeds Qt, the
+LGPL-3.0 relinking obligations apply to your distribution.
+
+--------------------------------------------------------------------------------
+AI models
+--------------------------------------------------------------------------------
+
+The embedding models and GGUF instruct models TicketLens downloads at runtime
+are NOT part of this distribution and are NOT covered by this project's license.
+Each carries its own terms (some, such as Gemma, have use policies that restrict
+certain applications). Review the model card on Hugging Face for any model you
+use, especially before commercial or regulated deployment.

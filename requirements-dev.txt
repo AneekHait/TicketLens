@@ -1,0 +1,12 @@
+# Development / test tooling — NOT required to run TicketLens.
+# Installs the pinned runtime set plus test dependencies:
+#   .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest==9.1.1
+
+# Linting. Narrow rule set (see ruff.toml): it exists to catch correctness bugs,
+# not to enforce style. It earned its place immediately -- its first run found four
+# error dialogs that raised NameError instead of displaying, and a Python 3.11
+# syntax incompatibility in an f-string.
+ruff==0.15.20

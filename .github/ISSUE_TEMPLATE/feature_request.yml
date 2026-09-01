@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a capability or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that TicketLens makes hard or impossible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Including any workaround you are using now.
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Does this fit the project's constraints?
+      description: >
+        TicketLens must keep working fully offline, send no telemetry, and stay
+        quick to install. Features that need a network service are out of scope.
+      options:
+        - label: This works offline and needs no new network calls
+        - label: This needs a new dependency (say which, and roughly how large)

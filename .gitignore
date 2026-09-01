@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# TicketLens — files that must NOT be tracked or shipped in git.
+# Models, the virtualenv, caches and logs are all created/downloaded on the
+# target machine at first run. Committing them bloats the repo: a stray
+# `git add .` over the Hugging Face model folders drags in several GB.
+# ---------------------------------------------------------------------------
+
+# Virtual environment (per-machine; pyvenv.cfg hardcodes an absolute interpreter
+# path so a copied venv is not portable). Includes bootstrap markers.
+.venv/
+.venv/.deps_installed
+.venv/.llama_ok
+
+# Downloaded models and the Hugging Face download cache (~7 GB; fetched on demand)
+models/
+models/.cache/
+
+# Runtime caches
+cache/
+
+# NOTE: wheels/ is intentionally TRACKED — it ships the CPU-profile-specific
+# llama-cpp-python wheel (wheels/avx2, wheels/sse) so compatible machines install
+# it directly instead of the crashing prebuilt AVX-512 wheel.
+
+# Logs (timestamped per launch)
+logs/
+
+# Per-user settings (diff-only overrides; recreated by the app on save)
+config/user_settings.json
+config/custom_stopwords.txt
+
+# Ticket data and generated reports. The app reads and writes Excel in the repo
+# root, so without these a stray `git add .` commits real support-ticket data.
+# Treat any workbook in the working tree as confidential and never commit one.
+*.xlsx
+*.xls
+*.csv
+*.docx
+# Saved sessions embed the ticket frame itself (tickets.csv inside the zip).
+*.tsz
+# Built distributables and downloaded model files (build_dist.ps1 writes the zip
+# to the parent directory, but be explicit in case it is pointed here).
+*.zip
+*.gguf
+
+# git filter-branch / filter-repo working directory
+.git-rewrite/
+
+# Python bytecode + test cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.pytest_tmp/
+
+# OS / editor cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

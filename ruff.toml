@@ -1,0 +1,45 @@
+# Ruff config for TicketLens.
+#
+# Scope is deliberately narrow: this exists to catch the class of bug that ruff already
+# found on its first run -- four `_post(lambda: ... str(e))` error dialogs that raised
+# NameError instead of showing anything, because Python deletes the `except ... as e`
+# binding at block exit. Correctness rules pay for themselves; style rules would bury
+# real changes under a reformat of 12k lines.
+#
+# Run it via check.ps1, or directly:
+#   python -m ruff check src tests main.py
+
+target-version = "py311"        # the floor README advertises (pandas 3.x needs 3.11+)
+line-length = 100               # matches the code as written: p99 is 99 chars
+
+exclude = [".venv", "models", "cache", "logs", ".pytest_tmp", "wheels"]
+
+[lint]
+select = [
+    "F",        # pyflakes: undefined names, unused imports/variables
+    "E9",       # syntax errors, including per-target-version ones
+    "B",        # bugbear: mutable defaults, except-clause traps
+    "ISC",      # implicit string-concat mistakes
+]
+# Not selected, on purpose:
+#   UP  - 26 io.open()/typing modernisations. Safe and auto-fixable, but pure churn
+#         across the test suite; worth doing in its own commit, not mixed into one that
+#         changes behaviour.
+#   C4  - 15 of the 20 hits are `dict(color=..., width=...)` in fishbone.py, which is
+#         idiomatic Plotly kwarg style and clearer left alone.
+
+ignore = [
+    # 160 existing lines exceed 100 chars. Wrapping them is a mass reformat that would
+    # bury behaviour changes in diff noise, so the limit above is advisory for now --
+    # turn this on once the tree has been wrapped deliberately, in its own commit.
+    "E501",
+]
+
+[lint.per-file-ignores]
+# Tests deliberately construct odd values and assert on private helpers.
+"tests/*" = ["B011"]
+
+[format]
+# Not enabled in CI or check.ps1 -- recorded so `ruff format` is consistent if anyone
+# reaches for it. Formatting the tree is a separate, deliberate decision.
+quote-style = "preserve"
