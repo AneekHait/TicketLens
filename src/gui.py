@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QLabel, QFileDialog, QMessageBox, QDialog,
     QCheckBox, QTextEdit, QFrame, QStackedWidget, QSplitter,
 )
-from PySide6.QtCore import Qt, Signal, QObject
+from PySide6.QtCore import Qt, Signal, QObject, QSize
 from PySide6.QtGui import QFont, QColor, QPalette
 
 # Ensure project root is in path
@@ -326,6 +326,9 @@ class ClusterApp(QMainWindow):
 
         # Dark Windows title bar to match the terminal theme.
         apply_dark_titlebar(self)
+
+    def minimumSizeHint(self):
+        return QSize(960, 580)
 
     # ---------------------------------------------------------------
     # Menu bar + Help/About dialogs

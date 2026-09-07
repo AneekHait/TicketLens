@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QComboBox, QCheckBox, QLineEdit, QTextEdit, QProgressBar, QScrollArea,
     QFrame, QStackedWidget, QSpinBox, QDoubleSpinBox,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
 
 from src.config import (ACCELERATION_OPTIONS, DEFAULTS, EMBEDDING_MODELS,
@@ -770,6 +770,7 @@ class AnalysisPage(QWidget):
         self.tab_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.tab_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.tab_scroll.setFixedHeight(46)
+        self.tab_scroll.setMinimumWidth(100)
         self.tab_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
         self.tab_scroll.setWidget(tab_container)
         layout.addWidget(self.tab_scroll)
@@ -791,6 +792,9 @@ class AnalysisPage(QWidget):
 
         # Set first tab active
         self.tab_buttons[0].setChecked(True)
+
+    def minimumSizeHint(self):
+        return QSize(600, 400)
 
     def _switch_tab(self, index):
         for i, btn in enumerate(self.tab_buttons):
