@@ -35,8 +35,8 @@ class ImportPage(QScrollArea):
         container = QWidget()
         container.setStyleSheet("background: transparent;")
         self.main_layout = QVBoxLayout(container)
-        self.main_layout.setContentsMargins(32, 24, 32, 24)
-        self.main_layout.setSpacing(16)
+        self.main_layout.setContentsMargins(32, 20, 32, 20)
+        self.main_layout.setSpacing(12)
         self.setWidget(container)
 
         # Page header
@@ -57,7 +57,6 @@ class ImportPage(QScrollArea):
 
         row = QHBoxLayout()
         self.btn_load = styled_button("Browse for Excel File", COLORS['accent'], "\U0001F4C1")
-        self.btn_load.setMinimumWidth(220)
         row.addWidget(self.btn_load)
 
         self.lbl_file = QLabel("No file loaded")
@@ -73,12 +72,13 @@ class ImportPage(QScrollArea):
                 background-color: {COLORS['bg_secondary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 2px;
-                padding: 10px;
+                padding: 6px;
             }}
         """)
         self.file_info_layout = QHBoxLayout(self.file_info_frame)
-        self.file_info_layout.setContentsMargins(12, 8, 12, 8)
+        self.file_info_layout.setContentsMargins(12, 6, 12, 6)
         self.lbl_file_info = QLabel("")
+        self.lbl_file_info.setWordWrap(True)
         self.lbl_file_info.setStyleSheet(f"color: {COLORS['text_secondary']}; border: none;")
         self.file_info_layout.addWidget(self.lbl_file_info)
         self.file_info_frame.hide()
@@ -91,7 +91,7 @@ class ImportPage(QScrollArea):
         self.sheet_dropdown = QComboBox()
         self.sheet_dropdown.addItem("-- Load a file first --")
         self.sheet_dropdown.setEnabled(False)
-        self.sheet_dropdown.setMinimumHeight(36)
+        self.sheet_dropdown.setMinimumHeight(34)
         layout2.addWidget(self.sheet_dropdown)
 
         # Step 3: Columns
@@ -107,8 +107,8 @@ class ImportPage(QScrollArea):
         # Scrollable column list
         self.col_scroll = QScrollArea()
         self.col_scroll.setWidgetResizable(True)
-        self.col_scroll.setMinimumHeight(160)
-        self.col_scroll.setMaximumHeight(300)
+        self.col_scroll.setMinimumHeight(90)
+        self.col_scroll.setMaximumHeight(260)
         self.col_scroll.setStyleSheet(f"""
             QScrollArea {{
                 background-color: {COLORS['bg_secondary']};
@@ -127,7 +127,8 @@ class ImportPage(QScrollArea):
 
         self.checkboxes = []
 
-        # Preview button
+        # Preview button + ready indicator in step 3
+        preview_row = QHBoxLayout()
         self.btn_preview = styled_button("Preview Sample (before / after cleaning)", COLORS['bg_card'], "\U0001F50D")
         self.btn_preview.setEnabled(False)
         self.btn_preview.setStyleSheet(f"""
@@ -142,13 +143,13 @@ class ImportPage(QScrollArea):
             QPushButton:hover {{ background-color: {COLORS['sidebar_hover']}; color: {COLORS['text']}; }}
             QPushButton:disabled {{ color: {COLORS['text_muted']}; }}
         """)
-        self.main_layout.addWidget(self.btn_preview)
+        preview_row.addWidget(self.btn_preview)
 
-        # Ready indicator
         self.ready_label = QLabel("")
         self.ready_label.setFont(QFont(MONO_FAMILY, 11))
-        self.ready_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.main_layout.addWidget(self.ready_label)
+        self.ready_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        preview_row.addWidget(self.ready_label, 1)
+        layout3.addLayout(preview_row)
 
         self.main_layout.addStretch()
 
@@ -537,14 +538,20 @@ class SettingsPage(QScrollArea):
 # ---------------------------------------------------------------
 # Page 2: Clustering
 # ---------------------------------------------------------------
-class ClusteringPage(QWidget):
+class ClusteringPage(QScrollArea):
     """Run clustering page with progress and status."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(32, 24, 32, 24)
-        layout.setSpacing(16)
+        self.setWidgetResizable(True)
+        self.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(32, 20, 32, 20)
+        layout.setSpacing(14)
+        self.setWidget(container)
 
         header = QLabel("Run Clustering")
         header.setFont(QFont(MONO_FAMILY, 22, QFont.Weight.Bold))
@@ -703,8 +710,12 @@ class AnalysisPage(QWidget):
         header.setFont(QFont(MONO_FAMILY, 22, QFont.Weight.Bold))
         layout.addWidget(header)
 
-        # Tab buttons row
-        self.tab_bar = QHBoxLayout()
+        # Tab buttons row inside a horizontal scroll area for responsive layout
+        tab_container = QWidget()
+        tab_container.setStyleSheet("background: transparent;")
+        self.tab_bar = QHBoxLayout(tab_container)
+        self.tab_bar.setContentsMargins(0, 0, 0, 0)
+        self.tab_bar.setSpacing(6)
         self.tab_buttons = []
         tabs = [
             ("Overview", COLORS['accent']),
@@ -722,14 +733,14 @@ class AnalysisPage(QWidget):
             btn = QPushButton(name)
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setMinimumHeight(38)
+            btn.setMinimumHeight(36)
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {COLORS['bg_card']};
                     color: {COLORS['text_secondary']};
                     border: 1px solid {COLORS['border']};
                     border-radius: 2px;
-                    padding: 8px 16px;
+                    padding: 6px 14px;
                     font-weight: bold;
                     font-size: 12px;
                 }}
@@ -747,7 +758,16 @@ class AnalysisPage(QWidget):
             self.tab_bar.addWidget(btn)
             self.tab_buttons.append(btn)
         self.tab_bar.addStretch()
-        layout.addLayout(self.tab_bar)
+
+        self.tab_scroll = QScrollArea()
+        self.tab_scroll.setWidgetResizable(True)
+        self.tab_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.tab_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.tab_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.tab_scroll.setFixedHeight(46)
+        self.tab_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.tab_scroll.setWidget(tab_container)
+        layout.addWidget(self.tab_scroll)
 
         # Stacked content area
         self.stack = QStackedWidget()
@@ -771,6 +791,8 @@ class AnalysisPage(QWidget):
         for i, btn in enumerate(self.tab_buttons):
             btn.setChecked(i == index)
         self.stack.setCurrentIndex(index)
+        if 0 <= index < len(self.tab_buttons):
+            self.tab_scroll.ensureWidgetVisible(self.tab_buttons[index])
 
     def _build_overview_tab(self):
         """Overall main-theme summary across all clustered tickets."""
@@ -863,7 +885,7 @@ class AnalysisPage(QWidget):
         sel.addWidget(QLabel("Article:"))
         self.kba_selector = QComboBox()
         self.kba_selector.addItem("-- Generate first --")
-        self.kba_selector.setMinimumWidth(400)
+        self.kba_selector.setMinimumWidth(220)
         sel.addWidget(self.kba_selector, 1)
         layout.addLayout(sel)
 
@@ -892,7 +914,7 @@ class AnalysisPage(QWidget):
         sel.addWidget(QLabel("SOP:"))
         self.sop_selector = QComboBox()
         self.sop_selector.addItem("-- Generate first --")
-        self.sop_selector.setMinimumWidth(400)
+        self.sop_selector.setMinimumWidth(220)
         sel.addWidget(self.sop_selector, 1)
         layout.addLayout(sel)
 
@@ -912,7 +934,7 @@ class AnalysisPage(QWidget):
         top.addWidget(QLabel("Scope:"))
         self.fishbone_scope = QComboBox()
         self.fishbone_scope.addItem("-- Select --")
-        self.fishbone_scope.setMinimumWidth(350)
+        self.fishbone_scope.setMinimumWidth(220)
         top.addWidget(self.fishbone_scope, 1)
         self.btn_fishbone_gen = styled_button("Generate", COLORS['accent_purple'], "\U0001F4C8")
         top.addWidget(self.btn_fishbone_gen)

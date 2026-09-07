@@ -172,7 +172,15 @@ class ClusterApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} — {APP_TAGLINE}")
-        self.resize(1200, 850)
+        screen = QApplication.primaryScreen()
+        if screen:
+            avail = screen.availableGeometry()
+            target_w = min(1200, max(960, int(avail.width() * 0.88)))
+            target_h = min(800, max(600, int(avail.height() * 0.85)))
+            self.resize(target_w, target_h)
+        else:
+            self.resize(1200, 800)
+        self.setMinimumSize(960, 580)
 
         # State
         self.df = None
@@ -251,7 +259,7 @@ class ClusterApp(QMainWindow):
         self.right_split.setStretchFactor(1, 0)
         self.right_split.setCollapsible(0, False)   # never hide the pages
         self.right_split.setCollapsible(1, True)     # console may collapse
-        self.right_split.setSizes([690, 160])
+        self.right_split.setSizes([680, 100])
         main_layout.addWidget(self.right_split, 1)
         self._update_nav_buttons(0)
 

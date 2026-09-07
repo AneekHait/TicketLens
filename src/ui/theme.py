@@ -440,7 +440,7 @@ def make_metric_card(label, value, color=COLORS['accent'], parent=None):
     """Create a compact metric display card."""
     card = QFrame(parent)
     card.setObjectName("metricCard")
-    card.setMinimumSize(180, 90)
+    card.setMinimumSize(130, 80)
     card.setMaximumHeight(100)
     card.setStyleSheet(f"""
         QFrame#metricCard {{
