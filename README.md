@@ -7,6 +7,10 @@
 
 **TicketLens** — a privacy-first desktop app that uses local AI to cluster IT support tickets (or any text data) into meaningful groups and surface insights (labels, KBAs, SOPs, audits). Your ticket data stays on your machine; the only outbound traffic is a one-time download of the AI models from Hugging Face on first run.
 
+<p align="center">
+  <img src="assets/screenshots/hero_clustering.png" alt="TicketLens Semantic Clustering Dashboard" width="100%">
+</p>
+
 ## Features
 - **Local & private:** Clustering and inference run offline on your CPU — your ticket data never leaves your machine. (AI models download once, on first run.)
 - **Semantic Clustering:** Groups tickets by meaning, not just keywords, with an interactive Min Cluster Size picker that lets you tune granularity after embedding.
@@ -85,20 +89,77 @@ pip does not install. `run.sh` checks for this on first run and prints the exact
     Settings → AI Model. Any instruct GGUF with an embedded chat template works
     (Gemma, Phi-4, Qwen, Llama-3) — the app uses the model's own chat template automatically.
 
-## Usage
+## Usage & Visual Walkthrough
 
-1.  Run the application:
-    ```bash
-    python main.py
-    ```
-2.  **Load Excel File:** Click "Load Excel File" and select your data.
-3.  **Select Columns:** Check the boxes for the text columns you want to analyze (e.g., "Short Description", "Notes").
-4.  **Configure Settings:**
-    - **AI Model:** Select your `.gguf` file (or leave the curated default).
-    - **Min Cluster Size:** Set it in the spinbox. Lower = more, narrower clusters. Higher = fewer, broader clusters. By default the app pauses after embedding to show you a comparison of candidate sizes so you can pick one against your actual data.
-5.  **Run:** Click "RUN CLUSTERING".
-6.  **Analyze:** Use the Analysis tab for Quality Audit, KBAs, SOPs, Impact Analysis, Fishbone diagrams, Automation Opportunities, and Category Audit.
-7.  **Save:** Save the results to a new Excel file, or export any individual report.
+### 1. Load Data & Column Mapping
+Select an Excel (`.xlsx` / `.xls`) workbook, choose the incident worksheet, and check the text fields to analyze (e.g. *Short Description*, *Resolution Notes*). TicketLens automatically cleans boilerplates, URLs, emails, and sensitive identifiers locally.
+
+<p align="center">
+  <img src="assets/screenshots/import_data.png" alt="TicketLens Data Import & Preprocessing" width="95%">
+</p>
+
+### 2. Configure AI Models & Hardware Acceleration
+Pick your local LLM and embedding model. Choose your preferred acceleration:
+- **PyTorch (default · reproducible)**: Reference CPU implementation.
+- **Apple Metal / MPS**: Direct Apple GPU acceleration for embeddings on macOS.
+- **MLX (Apple Silicon · experimental)**: 1-click install via the **Install MLX support…** button (or `./install_mlx.sh`).
+- **OpenVINO INT8 (Windows/Linux)**: 1-click install via **Install OpenVINO support…** (or `install_openvino.bat`).
+
+<p align="center">
+  <img src="assets/screenshots/settings_acceleration.png" alt="TicketLens Settings & Hardware Acceleration" width="95%">
+</p>
+
+### 3. Run Semantic Clustering
+Click **RUN CLUSTERING**. TicketLens embeds tickets into semantic vector space, reduces dimensions with UMAP, clusters with HDBSCAN, and names each cluster with the local LLM.
+
+<p align="center">
+  <img src="assets/screenshots/hero_clustering.png" alt="TicketLens Clustering Results" width="95%">
+</p>
+
+### 4. Analysis Dashboard & Actionable Insights
+Explore deep analysis across 10 specialized modules:
+
+<p align="center">
+  <img src="assets/screenshots/analysis_overview.png" alt="Analysis Overview & KPI Cards" width="95%">
+</p>
+
+<details>
+<summary><b>🔍 View Deep Analysis Modules (Quality Audit, KBAs, SOPs, Impact, Automation)</b></summary>
+
+#### Quality Audit
+Score ticket completeness, categorization accuracy, and resolution documentation across all clusters with one-click Excel export.
+<p align="center">
+  <img src="assets/screenshots/quality_audit.png" alt="TicketLens Quality Audit" width="90%">
+</p>
+
+#### Knowledge Base Articles (KBAs) & Standard Operating Procedures (SOPs)
+Generate actionable, structured KBA articles and standard procedures directly from incident resolution patterns.
+<p align="center">
+  <img src="assets/screenshots/kba_articles.png" alt="TicketLens KBA Generator" width="90%">
+</p>
+<p align="center">
+  <img src="assets/screenshots/sop_documents.png" alt="TicketLens SOP Generator" width="90%">
+</p>
+
+#### Impact Analysis & Bottlenecks
+Identify top incident volume drivers, business impact, and resolution bottlenecks.
+<p align="center">
+  <img src="assets/screenshots/impact_analysis.png" alt="TicketLens Impact Analysis" width="90%">
+</p>
+
+#### Automation & Self-Service Opportunities
+Evaluate disposition potential (*Automate, Reimagine, Eradicate, Retain*) and projected ROI hours saved.
+<p align="center">
+  <img src="assets/screenshots/automation_disposition.png" alt="TicketLens Automation Opportunities" width="90%">
+</p>
+
+#### Category Pivot Hierarchy
+Cross-tabulate high-level categories and granular subcategories with interactive counts and percentages.
+<p align="center">
+  <img src="assets/screenshots/category_pivot.png" alt="TicketLens Category Pivot" width="90%">
+</p>
+
+</details>
 
 ## Apple Silicon acceleration
 
@@ -109,7 +170,7 @@ can both run on the GPU. **Most of this needs no extra install:**
 |---|---|---|
 | LLM labelling | llama.cpp **Metal** | Automatic. `run.sh` installs the Metal wheel on arm64. |
 | Embeddings | PyTorch **MPS** | Settings → Acceleration → *"Apple Metal / MPS"* |
-| Either | **MLX** (experimental) | `./install_mlx.sh`, then pick it in Settings |
+| Either | **MLX** (experimental) | Settings → *"Install MLX support…"*, or `./install_mlx.sh` |
 
 `run.sh` picks the Metal `llama.cpp` build automatically on Apple Silicon (the
 CPU wheel index also has an arm64 wheel, but it is compiled without Metal, so
