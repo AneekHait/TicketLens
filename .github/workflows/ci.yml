@@ -74,6 +74,41 @@ jobs:
             libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
             libxcb-shape0
 
+      # On Linux, PyPI torch pulls ~5GB of NVIDIA CUDA packages that exhaust
+      # runner disk space. Pre-install the lightweight CPU-only build first.
+      - name: Pre-install PyTorch CPU (Linux)
+        if: runner.os == 'Linux'
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      # Upstream abetlen macosx_11_0_arm64 wheels have a broken zip CRC on bundled dylibs.
+      # The test suite uses FakeLLM and never invokes real llama_cpp; pre-install a stub
+      # so pip requirements install succeeds without downloading the corrupted wheel.
+      - name: Pre-install llama-cpp-python stub (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          python -c "
+import os, zipfile
+dist = 'llama_cpp_python-0.3.32.dist-info'
+os.makedirs('pkg/llama_cpp', exist_ok=True)
+os.makedirs(f'pkg/{dist}', exist_ok=True)
+with open('pkg/llama_cpp/__init__.py', 'w') as f:
+    f.write('__version__ = \"0.3.32\"\nclass Llama:\n    pass\n')
+with open(f'pkg/{dist}/METADATA', 'w') as f:
+    f.write('Metadata-Version: 2.1\nName: llama-cpp-python\nVersion: 0.3.32\n')
+with open(f'pkg/{dist}/WHEEL', 'w') as f:
+    f.write('Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
+with open(f'pkg/{dist}/RECORD', 'w') as f:
+    f.write('llama_cpp/__init__.py,,\n')
+whl = 'llama_cpp_python-0.3.32-py3-none-any.whl'
+with zipfile.ZipFile(whl, 'w') as z:
+    z.write('pkg/llama_cpp/__init__.py', 'llama_cpp/__init__.py')
+    z.write(f'pkg/{dist}/METADATA', f'{dist}/METADATA')
+    z.write(f'pkg/{dist}/WHEEL', f'{dist}/WHEEL')
+    z.write(f'pkg/{dist}/RECORD', f'{dist}/RECORD')
+"
+          pip install llama_cpp_python-0.3.32-py3-none-any.whl --no-deps
+          rm -rf pkg llama_cpp_python-0.3.32-py3-none-any.whl
+
       # The same index run.bat and run.sh use, so llama-cpp-python installs
       # prebuilt rather than trying to compile on the runner.
       - name: Install dependencies
@@ -81,6 +116,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt \
+            --find-links wheels \
             --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu \
             --only-binary llama-cpp-python
 

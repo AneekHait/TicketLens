@@ -1515,7 +1515,8 @@ Category:"""
             # ~2x the embedding matrix alive through UMAP/HDBSCAN/BERTopic — the stages
             # that need the memory most.
             del all_embeddings
-            log(f"Embeddings complete: {len(embeddings):,} docs in {format_time(embedding_total_time)} ({int(total_docs/embedding_total_time)} docs/sec)", 0.35)
+            docs_per_sec = f" ({int(total_docs / embedding_total_time)} docs/sec)" if embedding_total_time > 0 else ""
+            log(f"Embeddings complete: {len(embeddings):,} docs in {format_time(embedding_total_time)}{docs_per_sec}", 0.35)
 
             # Save to cache
             if self._cache_enabled and cache_key:
