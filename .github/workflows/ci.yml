@@ -86,28 +86,9 @@ jobs:
       - name: Pre-install llama-cpp-python stub (macOS)
         if: runner.os == 'macOS'
         run: |
-          python -c "
-import os, zipfile
-dist = 'llama_cpp_python-0.3.32.dist-info'
-os.makedirs('pkg/llama_cpp', exist_ok=True)
-os.makedirs(f'pkg/{dist}', exist_ok=True)
-with open('pkg/llama_cpp/__init__.py', 'w') as f:
-    f.write('__version__ = \"0.3.32\"\nclass Llama:\n    pass\n')
-with open(f'pkg/{dist}/METADATA', 'w') as f:
-    f.write('Metadata-Version: 2.1\nName: llama-cpp-python\nVersion: 0.3.32\n')
-with open(f'pkg/{dist}/WHEEL', 'w') as f:
-    f.write('Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
-with open(f'pkg/{dist}/RECORD', 'w') as f:
-    f.write('llama_cpp/__init__.py,,\n')
-whl = 'llama_cpp_python-0.3.32-py3-none-any.whl'
-with zipfile.ZipFile(whl, 'w') as z:
-    z.write('pkg/llama_cpp/__init__.py', 'llama_cpp/__init__.py')
-    z.write(f'pkg/{dist}/METADATA', f'{dist}/METADATA')
-    z.write(f'pkg/{dist}/WHEEL', f'{dist}/WHEEL')
-    z.write(f'pkg/{dist}/RECORD', f'{dist}/RECORD')
-"
+          python .github/scripts/make_llama_stub.py
           pip install llama_cpp_python-0.3.32-py3-none-any.whl --no-deps
-          rm -rf pkg llama_cpp_python-0.3.32-py3-none-any.whl
+          rm -f llama_cpp_python-0.3.32-py3-none-any.whl
 
       # The same index run.bat and run.sh use, so llama-cpp-python installs
       # prebuilt rather than trying to compile on the runner.
