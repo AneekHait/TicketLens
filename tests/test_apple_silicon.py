@@ -10,6 +10,7 @@ does not load, a label comes out empty. A wrong embedding backend is silent: it
 returns plausible numbers, and the user gets a plausible set of *different*
 clusters with nothing to indicate anything went wrong.
 """
+import os
 import numpy as np
 import pytest
 
@@ -17,6 +18,7 @@ from src import mlx_backend as mlxb
 from src.acceleration import resolve_backend
 from src.config import (ACCELERATION_OPTIONS, EMBEDDING_MODELS, LLM_MODELS,
                         MLX_COMPATIBLE_MODELS, MLX_LLM_MODELS)
+from src.gui import ClusterApp
 
 
 # ---------------------------------------------------------------------------
@@ -312,3 +314,155 @@ def test_apple_options_are_described_as_apple_only_in_the_dropdown():
 
 def test_describe_never_raises_on_any_platform():
     assert isinstance(mlxb.describe(), str)
+
+
+# ---------------------------------------------------------------------------
+# UI: MLX installation button and platform acceleration behavior
+# ---------------------------------------------------------------------------
+def test_settings_page_has_install_mlx_button(qapp):
+    """SettingsPage must construct btn_install_mlx alongside btn_install_ov."""
+    win = ClusterApp()
+    sp = win.settings_page
+    assert hasattr(sp, "btn_install_mlx")
+    assert hasattr(sp, "btn_install_ov")
+    assert "MLX" in sp.btn_install_mlx.text()
+
+
+def test_accel_options_ui_apple_silicon_mlx_not_installed(qapp, monkeypatch):
+    """On Apple Silicon without MLX installed, btn_install_mlx is shown and
+    btn_install_ov is hidden."""
+    monkeypatch.setattr(mlxb, "is_apple_silicon", lambda: True)
+    monkeypatch.setattr(mlxb, "mlx_embeddings_available", lambda: False)
+    monkeypatch.setattr(mlxb, "mps_available", lambda: True)
+    from src import acceleration as accel_mod
+    monkeypatch.setattr(accel_mod, "openvino_available", lambda: False)
+
+    win = ClusterApp()
+    win.pages.setCurrentWidget(win.settings_page)
+    win.show()
+    qapp.processEvents()
+    sp = win.settings_page
+
+    # PyTorch selected (default on Apple Silicon)
+    pytorch_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "pytorch")
+    sp.accel_dropdown.setCurrentText(pytorch_label)
+    win._update_accel_options()
+
+    assert not sp.btn_install_ov.isVisible()
+    assert sp.btn_install_mlx.isVisible()
+
+    # MLX selected
+    mlx_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "mlx")
+    sp.accel_dropdown.setCurrentText(mlx_label)
+    win._update_accel_options()
+
+    assert not sp.btn_install_ov.isVisible()
+    assert sp.btn_install_mlx.isVisible()
+    assert "MLX not installed" in sp.lbl_accel_status.text()
+
+    # MPS selected (built-in Metal)
+    mps_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "mps")
+    sp.accel_dropdown.setCurrentText(mps_label)
+    win._update_accel_options()
+
+    assert not sp.btn_install_ov.isVisible()
+    assert not sp.btn_install_mlx.isVisible()
+
+
+def test_accel_options_ui_apple_silicon_mlx_installed(qapp, monkeypatch):
+    """When MLX is already installed on Apple Silicon, the install button is hidden."""
+    monkeypatch.setattr(mlxb, "is_apple_silicon", lambda: True)
+    monkeypatch.setattr(mlxb, "mlx_embeddings_available", lambda: True)
+    monkeypatch.setattr(mlxb, "mps_available", lambda: True)
+    from src import acceleration as accel_mod
+    monkeypatch.setattr(accel_mod, "openvino_available", lambda: False)
+
+    win = ClusterApp()
+    win.pages.setCurrentWidget(win.settings_page)
+    win.show()
+    qapp.processEvents()
+    sp = win.settings_page
+
+    # PyTorch selected
+    pytorch_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "pytorch")
+    sp.accel_dropdown.setCurrentText(pytorch_label)
+    win._update_accel_options()
+    assert not sp.btn_install_mlx.isVisible()
+
+    # MLX selected
+    mlx_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "mlx")
+    sp.accel_dropdown.setCurrentText(mlx_label)
+    win._update_accel_options()
+    assert not sp.btn_install_mlx.isVisible()
+
+
+def test_accel_options_ui_non_apple_platform(qapp, monkeypatch):
+    """On Windows / Linux, btn_install_mlx is never shown, and OpenVINO install
+    button appears when OpenVINO is missing."""
+    monkeypatch.setattr(mlxb, "is_apple_silicon", lambda: False)
+    from src import acceleration as accel_mod
+    monkeypatch.setattr(accel_mod, "openvino_available", lambda: False)
+
+    win = ClusterApp()
+    win.pages.setCurrentWidget(win.settings_page)
+    win.show()
+    qapp.processEvents()
+    sp = win.settings_page
+
+    pytorch_label = next(l for l, v in ACCELERATION_OPTIONS.items() if v == "pytorch")
+    sp.accel_dropdown.setCurrentText(pytorch_label)
+    win._update_accel_options()
+
+    assert not sp.btn_install_mlx.isVisible()
+    assert sp.btn_install_ov.isVisible()
+
+
+def test_install_mlx_support_handler(qapp, monkeypatch):
+    """Clicking install MLX launches Terminal with install_mlx.command or .sh."""
+    from PySide6.QtWidgets import QMessageBox
+    import subprocess
+
+    win = ClusterApp()
+    launched = []
+    info_shown = []
+
+    monkeypatch.setattr(subprocess, "Popen", lambda cmd, **kw: launched.append(cmd))
+    monkeypatch.setattr(QMessageBox, "information", lambda *a: info_shown.append(a))
+
+    win.install_mlx_support()
+
+    assert len(launched) == 1
+    assert launched[0][0] == "open"
+    assert "install_mlx" in launched[0][-1]
+    assert len(info_shown) == 1
+
+
+def test_install_mlx_support_missing_script(qapp, monkeypatch):
+    """Reports warning if install_mlx.sh is not found."""
+    from PySide6.QtWidgets import QMessageBox
+
+    win = ClusterApp()
+    warnings = []
+    monkeypatch.setattr(os.path, "isfile", lambda p: False if "install_mlx" in p else True)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a: warnings.append(a))
+
+    win.install_mlx_support()
+
+    assert len(warnings) == 1
+    assert "Installer missing" in warnings[0][1]
+
+
+def test_install_openvino_guard_on_macos(qapp, monkeypatch):
+    """install_openvino_support must gracefully notify on macOS instead of running cmd."""
+    import sys
+    from PySide6.QtWidgets import QMessageBox
+
+    win = ClusterApp()
+    info = []
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(QMessageBox, "information", lambda *a: info.append(a))
+
+    win.install_openvino_support()
+
+    assert len(info) == 1
+    assert "OpenVINO not supported on this OS" in info[0][1]

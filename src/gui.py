@@ -641,6 +641,7 @@ class ClusterApp(QMainWindow):
         s.accel_dropdown.currentTextChanged.connect(self.on_accel_selection_changed)
         s.btn_build_accel.clicked.connect(self.build_accelerated_model)
         s.btn_install_ov.clicked.connect(self.install_openvino_support)
+        s.btn_install_mlx.clicked.connect(self.install_mlx_support)
         s.btn_manage_sw.clicked.connect(self.manage_stopwords)
         s.chk_llm.stateChanged.connect(self.toggle_llm_ui)
         s.btn_suggest_cs.clicked.connect(self._suggest_min_cluster_size)
@@ -1310,10 +1311,12 @@ class ClusterApp(QMainWindow):
         # the package, and a model on the verified list.
         from src import mlx_backend as mlxb
         apple = mlxb.is_apple_silicon()
+        mlx_pkg = mlxb.mlx_embeddings_available()
+        mlx_model = accel.model_supports_mlx(hf or "")
         enabled_for = {
             "openvino_int8_cpu": int8_enabled,
             "mps": apple and mlxb.mps_available(),
-            "mlx": apple and mlxb.mlx_embeddings_available() and accel.model_supports_mlx(hf or ""),
+            "mlx": apple and mlx_pkg and mlx_model,
         }
         for idx, label in enumerate(sp._accel_labels):
             value = ACCELERATION_OPTIONS[label]
@@ -1325,21 +1328,41 @@ class ClusterApp(QMainWindow):
                 pass
 
         sel_value = ACCELERATION_OPTIONS.get(sp.accel_dropdown.currentText(), "pytorch")
-        if sel_value in ("mps", "mlx") and apple:
+        if apple:
+            sp.btn_install_ov.setVisible(False)
             if sel_value == "mps":
                 sp.lbl_accel_status.setText(
                     "Apple GPU (Metal). Falls back to CPU per model if an op is unsupported."
                     if enabled_for["mps"] else "Metal/MPS not available — using PyTorch CPU.")
-            else:
-                sp.lbl_accel_status.setText(
-                    "Experimental. Verified against PyTorch on load; rejected if it disagrees."
-                    if enabled_for["mlx"] else
-                    "MLX not installed or model not MLX-verified — using PyTorch.")
+                sp.lbl_accel_status.setStyleSheet(f"color: {COLORS['text_muted']}; border: none;")
+                sp.btn_install_mlx.setVisible(False)
+                sp.btn_build_accel.setVisible(False)
+                return
+
+            if sel_value == "mlx":
+                if not mlx_pkg:
+                    sp.lbl_accel_status.setText("MLX not installed — using PyTorch.")
+                    sp.btn_install_mlx.setVisible(True)
+                elif not mlx_model:
+                    sp.lbl_accel_status.setText("This model is not MLX-verified — using PyTorch.")
+                    sp.btn_install_mlx.setVisible(False)
+                else:
+                    sp.lbl_accel_status.setText(
+                        "Experimental. Verified against PyTorch on load; rejected if it disagrees.")
+                    sp.btn_install_mlx.setVisible(False)
+                sp.lbl_accel_status.setStyleSheet(f"color: {COLORS['text_muted']}; border: none;")
+                sp.btn_build_accel.setVisible(False)
+                return
+
+            # Default / PyTorch on Apple Silicon
+            sp.lbl_accel_status.setText("Experimental. PyTorch is the reproducible default.")
             sp.lbl_accel_status.setStyleSheet(f"color: {COLORS['text_muted']}; border: none;")
-            sp.btn_install_ov.setVisible(False)
+            sp.btn_install_mlx.setVisible(not mlx_pkg)
             sp.btn_build_accel.setVisible(False)
             return
 
+        # Non-Apple platforms (Windows / Linux):
+        sp.btn_install_mlx.setVisible(False)
         if not ov:
             sp.lbl_accel_status.setText("OpenVINO not installed — using PyTorch.")
             sp.lbl_accel_status.setStyleSheet(f"color: {COLORS['text_muted']}; border: none;")
@@ -1407,6 +1430,12 @@ class ClusterApp(QMainWindow):
     def install_openvino_support(self):
         """Launch install_openvino.bat in its own console window."""
         import subprocess
+        if sys.platform != "win32":
+            QMessageBox.information(
+                self, "OpenVINO not supported on this OS",
+                "OpenVINO acceleration is configured for Windows in TicketLens. "
+                "On Apple Silicon Macs, use Apple Metal / MPS or MLX acceleration instead.")
+            return
         bat = os.path.join(os.path.dirname(os.path.dirname(__file__)), "install_openvino.bat")
         if not os.path.isfile(bat):
             QMessageBox.warning(self, "Installer missing",
@@ -1418,6 +1447,36 @@ class ClusterApp(QMainWindow):
                 self, "Installing OpenVINO",
                 "OpenVINO is installing in a new window. When it finishes, restart TicketLens "
                 "to enable INT8 acceleration.")
+        except Exception as e:
+            QMessageBox.warning(self, "Install failed", f"Could not launch the installer: {e}")
+
+    def install_mlx_support(self):
+        """Launch install_mlx.sh in its own Terminal window."""
+        import subprocess
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        cmd_path = os.path.join(base_dir, "install_mlx.command")
+        sh_path = os.path.join(base_dir, "install_mlx.sh")
+        if not os.path.isfile(sh_path):
+            QMessageBox.warning(self, "Installer missing",
+                                "install_mlx.sh was not found in the app folder.")
+            return
+        try:
+            try:
+                os.chmod(sh_path, 0o755)
+            except Exception:
+                pass
+            if os.path.isfile(cmd_path):
+                try:
+                    os.chmod(cmd_path, 0o755)
+                except Exception:
+                    pass
+                subprocess.Popen(["open", cmd_path])
+            else:
+                subprocess.Popen(["open", "-a", "Terminal", sh_path])
+            QMessageBox.information(
+                self, "Installing MLX",
+                "MLX installation has opened in a new Terminal window. "
+                "When it finishes, restart TicketLens to use MLX acceleration.")
         except Exception as e:
             QMessageBox.warning(self, "Install failed", f"Could not launch the installer: {e}")
 

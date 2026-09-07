@@ -281,10 +281,15 @@ class SettingsPage(QScrollArea):
         self.btn_build_accel = styled_button("Build accelerated model", COLORS['accent'], "⚡", small=True)
         self.btn_build_accel.setVisible(False)
         row_accel.addWidget(self.btn_build_accel)
-        # Shown only when the OpenVINO stack isn't installed.
+        # Shown only when the OpenVINO stack isn't installed (Windows/Linux).
         self.btn_install_ov = styled_button("Install OpenVINO support…", COLORS['text_muted'], "⬇", small=True)
         self.btn_install_ov.setVisible(False)
         row_accel.addWidget(self.btn_install_ov)
+        # Shown only on Apple Silicon when the MLX stack isn't installed.
+        self.btn_install_mlx = styled_button("Install MLX support…", COLORS['text_muted'], "⬇", small=True)
+        self.btn_install_mlx.setVisible(False)
+        self.btn_install_mlx.setToolTip("Install MLX acceleration for Apple Silicon (runs install_mlx.sh)")
+        row_accel.addWidget(self.btn_install_mlx)
         layout_emb.addLayout(row_accel)
 
         # Clustering Parameters
