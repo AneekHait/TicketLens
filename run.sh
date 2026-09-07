@@ -157,7 +157,7 @@ if [ ! -f "$MARKER" ]; then
     else
         WHEEL_INDEX=$WHEEL_INDEX_CPU
     fi
-    PIP_ARGS=(-r requirements.txt --extra-index-url "$WHEEL_INDEX")
+    PIP_ARGS=(-r requirements.txt --find-links wheels --extra-index-url "$WHEEL_INDEX")
 
     if [ "$PLATFORM" = macOS ] && [ "$ARCH" = "x86_64" ]; then
         # Checked against the index: llama-cpp-python publishes no macOS x86_64
@@ -178,6 +178,14 @@ if [ ! -f "$MARKER" ]; then
         # is a clear error rather than a surprise 20-minute compile.
         PIP_ARGS+=(--only-binary llama-cpp-python)
     fi
+
+    # If a matching local wheel exists in wheels/, install it first to avoid upstream index bugs
+    for local_whl in wheels/llama_cpp_python-$LLAMA_PIN-*.whl; do
+        if [ -f "$local_whl" ]; then
+            "$VPY" -m pip install --no-deps "$local_whl" || true
+            break
+        fi
+    done
 
     if ! "$VPY" -m pip install "${PIP_ARGS[@]}"; then
         die "Dependency installation failed - see the messages above.
